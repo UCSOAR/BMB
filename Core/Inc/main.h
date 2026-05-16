@@ -85,6 +85,9 @@ void Error_Handler(void);
 #define ADC1_IN1_GPIO_Port GPIOE
 #define SPI2_TC_CS1_N_Pin GPIO_PIN_15
 #define SPI2_TC_CS1_N_GPIO_Port GPIOE
+#define ALERT_Pin GPIO_PIN_7
+#define ALERT_GPIO_Port GPIOC
+#define ALERT_EXTI_IRQn EXTI9_5_IRQn
 #define I2C3_SCL_TEMP_Pin GPIO_PIN_8
 #define I2C3_SCL_TEMP_GPIO_Port GPIOC
 #define I2C3_SDA_TEMP_Pin GPIO_PIN_9

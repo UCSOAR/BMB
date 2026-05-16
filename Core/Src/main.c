@@ -67,6 +67,7 @@ static void MX_USB_PCD_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+void BQ76942_NotifyAlertInterrupt(void);
 
 /* USER CODE END PFP */
 
@@ -477,11 +478,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : ALERT_Pin */
+  GPIO_InitStruct.Pin = ALERT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ALERT_GPIO_Port, &GPIO_InitStruct);
+
   /*Configure GPIO pins : TC_FAULT3_OUT_N_Pin TC_DRDY3_OUT_N_Pin TC_DRDY2_OUT_N_Pin */
   GPIO_InitStruct.Pin = TC_FAULT3_OUT_N_Pin|TC_DRDY3_OUT_N_Pin|TC_DRDY2_OUT_N_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -489,6 +500,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == ALERT_Pin)
+  {
+    BQ76942_NotifyAlertInterrupt();
+  }
+}
 
 /* USER CODE END 4 */
 
