@@ -29,18 +29,6 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32g4xx_hal.h"
 
-#include "stm32g4xx_ll_usart.h"
-#include "stm32g4xx_ll_rcc.h"
-#include "stm32g4xx_ll_bus.h"
-#include "stm32g4xx_ll_cortex.h"
-#include "stm32g4xx_ll_system.h"
-#include "stm32g4xx_ll_utils.h"
-#include "stm32g4xx_ll_pwr.h"
-#include "stm32g4xx_ll_gpio.h"
-#include "stm32g4xx_ll_dma.h"
-
-#include "stm32g4xx_ll_exti.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -75,14 +63,16 @@ void Error_Handler(void);
 #define DEBUG_SW_NRST_GPIO_Port GPIOG
 #define TC_FAULT2_OUT_N_Pin GPIO_PIN_0
 #define TC_FAULT2_OUT_N_GPIO_Port GPIOC
-#define SPI2_TC_CS2_N_Pin GPIO_PIN_3
-#define SPI2_TC_CS2_N_GPIO_Port GPIOC
 #define FLASH_RESET_Pin GPIO_PIN_4
 #define FLASH_RESET_GPIO_Port GPIOA
 #define QSPI_BK_NCS_Pin GPIO_PIN_5
 #define QSPI_BK_NCS_GPIO_Port GPIOA
-#define TRANSCEIVER_DE_Pin GPIO_PIN_2
-#define TRANSCEIVER_DE_GPIO_Port GPIOB
+#define CAN_LED_Pin GPIO_PIN_0
+#define CAN_LED_GPIO_Port GPIOB
+#define SPI_LED_Pin GPIO_PIN_1
+#define SPI_LED_GPIO_Port GPIOB
+#define UART_LED_Pin GPIO_PIN_2
+#define UART_LED_GPIO_Port GPIOB
 #define TRANSCEIVER_RE_N_Pin GPIO_PIN_7
 #define TRANSCEIVER_RE_N_GPIO_Port GPIOE
 #define TC_DRDY1_OUT_N_Pin GPIO_PIN_9
@@ -95,16 +85,10 @@ void Error_Handler(void);
 #define ADC1_IN1_GPIO_Port GPIOE
 #define SPI2_TC_CS1_N_Pin GPIO_PIN_15
 #define SPI2_TC_CS1_N_GPIO_Port GPIOE
-#define SPI2_TC_SCK_Pin GPIO_PIN_13
-#define SPI2_TC_SCK_GPIO_Port GPIOB
-#define SPI2_TC_MOSI_Pin GPIO_PIN_15
-#define SPI2_TC_MOSI_GPIO_Port GPIOB
 #define I2C3_SCL_TEMP_Pin GPIO_PIN_8
 #define I2C3_SCL_TEMP_GPIO_Port GPIOC
 #define I2C3_SDA_TEMP_Pin GPIO_PIN_9
 #define I2C3_SDA_TEMP_GPIO_Port GPIOC
-#define SPI2_TC_CS3_N_Pin GPIO_PIN_9
-#define SPI2_TC_CS3_N_GPIO_Port GPIOA
 #define HEATER_ENABLE_Pin GPIO_PIN_4
 #define HEATER_ENABLE_GPIO_Port GPIOB
 #define MEV_ENABLE_Pin GPIO_PIN_5

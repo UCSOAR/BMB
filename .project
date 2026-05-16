@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>PBB</name>
+	<name>BMB</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -31,11 +31,10 @@
 		<nature>com.st.stm32cube.ide.mcu.MCUNonUnderRootProjectNature</nature>
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>Drivers/CMSIS/system_stm32g4xx.c</name>
-			<type>1</type>
-			<locationURI>PROJECT_LOC/Core/Src/system_stm32g4xx.c</locationURI>
-		</link>
-	</linkedResources>
+	<variableList>
+		<variable>
+			<name>copy_PROJECT_LOC</name>
+			<value>$%7BPARENT-3-ECLIPSE_HOME%7D/cygwin64/home/spiro/SOAR/BMB</value>
+		</variable>
+	</variableList>
 </projectDescription>
