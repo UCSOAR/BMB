@@ -29,6 +29,8 @@ extern "C" {
 #endif
 void cpp_USART1_IRQHandler();
 void cpp_UART5_IRQHandler();
+void cpp_UART4_IRQHandler();
+
 #ifdef __cplusplus
 }
 #endif

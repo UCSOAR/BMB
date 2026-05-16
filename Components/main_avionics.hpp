@@ -41,9 +41,11 @@ class UARTDriver;
 namespace Driver {
 extern UARTDriver uart5;
 extern UARTDriver usart1;
+extern UARTDriver uart4;
+
 }
 namespace UART {
-constexpr UARTDriver* Debug = &Driver::uart5;
+constexpr UARTDriver* Debug = &Driver::uart4;
 constexpr UARTDriver* pbb_rs485 = &Driver::usart1;
 }
 

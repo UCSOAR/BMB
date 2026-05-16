@@ -18,4 +18,7 @@ void cpp_USART1_IRQHandler() {
 
 void cpp_UART5_IRQHandler() {
 		Driver::uart5.HandleIRQ_UART();}
+
+void cpp_UART4_IRQHandler() {
+		Driver::uart4.HandleIRQ_UART();}
 }
