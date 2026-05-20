@@ -10,7 +10,6 @@
 #include "SystemDefines.hpp"
 #include "UARTDriver.hpp"
 #include "CubeTask.hpp"
-#include "FlashTask.hpp"
 #include "UARTTask.hpp"
 /* Drivers ------------------------------------------------------------------*/
 namespace Driver
@@ -33,7 +32,6 @@ void run_main()
   UARTTask::Inst().InitTask();
   CubeTask::Inst().InitTask();
   DebugTask::Inst().InitTask();
-  FlashTask::Inst().InitTask();
 
 
   // Print System Boot Info : Warning, don't queue more than 10 prints before

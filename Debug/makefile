@@ -9,6 +9,13 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include SoarOS/Drivers/subdir.mk
+-include SoarOS/Core/subdir.mk
+-include SoarOS/subdir.mk
+-include SoarDrivers/FDCanG4/subdir.mk
+-include SoarDrivers/.metadata/.plugins/org.eclipse.cdt.managedbuilder.core/subdir.mk
+-include SoarDrivers/.metadata/.plugins/org.eclipse.cdt.make.core/subdir.mk
+-include SoarCommunications/CanAutoNode/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/subdir.mk
@@ -16,6 +23,9 @@ RM := rm -rf
 -include Drivers/STM32G4xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
+-include Components/SoarDebug/subdir.mk
+-include Components/Communication/subdir.mk
+-include Components/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)

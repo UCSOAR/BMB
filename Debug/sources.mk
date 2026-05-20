@@ -38,6 +38,9 @@ CPP_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+Components \
+Components/Communication \
+Components/SoarDebug \
 Core/Src \
 Core/Startup \
 Drivers/STM32G4xx_HAL_Driver/Src \
@@ -45,4 +48,11 @@ Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS \
 Middlewares/Third_Party/FreeRTOS/Source \
 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F \
 Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang \
+SoarCommunications/CanAutoNode \
+SoarDrivers/.metadata/.plugins/org.eclipse.cdt.make.core \
+SoarDrivers/.metadata/.plugins/org.eclipse.cdt.managedbuilder.core \
+SoarDrivers/FDCanG4 \
+SoarOS/Core \
+SoarOS \
+SoarOS/Drivers \
 

@@ -22,6 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 //#define USE_FULL_LL_DRIVER
 /* USER CODE END Includes */
 
@@ -73,7 +74,6 @@ void BQ76942_NotifyAlertInterrupt(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -110,7 +110,10 @@ int main(void)
   MX_UART4_Init();
   MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
+  __enable_irq();
 
+  run_interface();
+  #if 0
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -150,6 +153,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   }
+
+#endif
   /* USER CODE END 3 */
 }
 
