@@ -54,7 +54,7 @@ BQ76942::Status BQ76942::ReadMeasurements(Measurements &measurements) const
     return ReadCurrent(measurements.current_userA);
 }
 
-BQ76942::Status BQ76942::ReadCellVoltage(std::uint8_t cellIndex, std::uint16_t &millivolts) const
+BQ76942::Status BQ76942::ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const
 {
     if (cellIndex >= _config.cellCount || cellIndex >= MAX_CELL_COUNT)
     {
@@ -63,12 +63,12 @@ BQ76942::Status BQ76942::ReadCellVoltage(std::uint8_t cellIndex, std::uint16_t &
 
     const std::uint8_t registerAddress =
         static_cast<std::uint8_t>(CELL_1_VOLTAGE + (cellIndex * 2U));
-    return ReadU16(static_cast<Register>(registerAddress), millivolts);
+    return ReadI16(static_cast<Register>(registerAddress), millivolts);
 }
 
-BQ76942::Status BQ76942::ReadStackVoltage(std::uint16_t &userVolts) const
+BQ76942::Status BQ76942::ReadStackVoltage(std::int16_t &userVolts) const
 {
-    return ReadU16(STACK_VOLTAGE, userVolts);
+    return ReadI16(STACK_VOLTAGE, userVolts);
 }
 
 BQ76942::Status BQ76942::ReadCurrent(std::int16_t &userAmps) const
@@ -204,4 +204,15 @@ BQ76942::Status BQ76942::WriteU16(Register reg, std::uint16_t value) const
                              I2C_TIMEOUT_MS) == HAL_OK
                ? Status::OK
                : Status::ERR_I2C;
+}
+
+BQ76942::Status BQ76942::ReadDeviceID() const {
+	uint8_t cmd[2] = {0x01, 0x00};
+	HAL_I2C_Mem_Write(_hi2c, 0x10, 0x3E, I2C_MEMADD_SIZE_8BIT, cmd, 2, 100);
+
+	uint8_t raw[2];
+	HAL_I2C_Mem_Read(_hi2c, 0x10, 0x40, I2C_MEMADD_SIZE_8BIT, raw, 2, 100);
+
+	uint16_t id = raw[0] | (raw[1] << 8);   // 0x7694
+
 }

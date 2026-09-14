@@ -19,6 +19,11 @@ public:
     static constexpr std::uint8_t DEFAULT_7BIT_ADDRESS = 0x08;
     static constexpr std::uint16_t DEFAULT_CHARGE_VOLTAGE_LIMIT_MV = 20000;
     static constexpr std::uint16_t DEFAULT_CHARGE_CURRENT_LIMIT_MA = 1500;
+    static constexpr std::uint8_t  SUBCMD_ADDR   = 0x3E;
+    static constexpr std::uint8_t  SUBCMD_BUFFER = 0x40;
+    static constexpr std::uint8_t  SUBCMD_DELAY_MS = 2;
+    static constexpr std::uint16_t SUBCMD_DEVICE_NUMBER = 0x0001;
+    static constexpr std::uint16_t DEVICE_ID = 0x7694;
 
     enum class Status : std::uint8_t
     {
@@ -36,8 +41,8 @@ public:
 
     struct Measurements
     {
-        std::uint16_t cellVoltage_mV[MAX_CELL_COUNT]{};
-        std::uint16_t stackVoltage_userV = 0;
+        std::int16_t cellVoltage_mV[MAX_CELL_COUNT]{};
+        std::int16_t stackVoltage_userV = 0;
         std::int16_t current_userA = 0;
     };
 
@@ -56,12 +61,13 @@ public:
 
     Status IsConnected() const;
     Status ReadMeasurements(Measurements &measurements) const;
-    Status ReadCellVoltage(std::uint8_t cellIndex, std::uint16_t &millivolts) const;
-    Status ReadStackVoltage(std::uint16_t &userVolts) const;
+    Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
+    Status ReadStackVoltage(std::int16_t &userVolts) const;
     Status ReadCurrent(std::int16_t &userAmps) const;
     Status ReadAlarmStatus(std::uint16_t &alarmStatus) const;
     Status ClearAlarmStatus(std::uint16_t alarmMask) const;
     Status ReadSafetyStatus(SafetyStatus &status) const;
+    Status ReadDeviceID() const;
     bool IsAlertAsserted() const;
     static void NotifyAlertInterrupt();
     static bool ConsumeAlertInterrupt();
@@ -81,6 +87,7 @@ private:
         STACK_VOLTAGE = 0x34,
         CC2_CURRENT = 0x3A,
         ALARM_STATUS = 0x62
+
     };
 
     Status ReadU8(Register reg, std::uint8_t &value) const;
