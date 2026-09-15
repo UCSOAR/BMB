@@ -11,6 +11,7 @@
 #include "UARTDriver.hpp"
 #include "CubeTask.hpp"
 #include "UARTTask.hpp"
+#include "BQ76942Task.hpp"
 /* Drivers ------------------------------------------------------------------*/
 namespace Driver
 {
@@ -32,6 +33,7 @@ void run_main()
   UARTTask::Inst().InitTask();
   CubeTask::Inst().InitTask();
   DebugTask::Inst().InitTask();
+  BQ76942Task::Inst().InitTask();
 
 
   // Print System Boot Info : Warning, don't queue more than 10 prints before

@@ -46,7 +46,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+void cpp_UART4_IRQHandler(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

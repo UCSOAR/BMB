@@ -69,6 +69,7 @@ void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 void BQ76942_NotifyAlertInterrupt(void);
+void run_interface(void);
 
 /* USER CODE END PFP */
 

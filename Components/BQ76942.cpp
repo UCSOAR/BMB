@@ -29,9 +29,14 @@ BQ76942::Status BQ76942::IsConnected() const
         return Status::ERR_INVALID_ARG;
     }
 
-    return HAL_I2C_IsDeviceReady(_hi2c, _deviceAddress, 2, I2C_TIMEOUT_MS) == HAL_OK
-               ? Status::OK
-               : Status::ERR_I2C;
+    if(HAL_I2C_IsDeviceReady(_hi2c, _deviceAddress, 2, I2C_TIMEOUT_MS) == HAL_OK){
+    	return (ReadDeviceID() == Status::OK)
+    			? Status::OK
+    			: Status::ERR_INVALID_ARG;
+    }
+
+    return Status::ERR_INVALID_ARG;
+
 }
 
 BQ76942::Status BQ76942::ReadMeasurements(Measurements &measurements) const
@@ -206,13 +211,36 @@ BQ76942::Status BQ76942::WriteU16(Register reg, std::uint16_t value) const
                : Status::ERR_I2C;
 }
 
-BQ76942::Status BQ76942::ReadDeviceID() const {
-	uint8_t cmd[2] = {0x01, 0x00};
-	HAL_I2C_Mem_Write(_hi2c, 0x10, 0x3E, I2C_MEMADD_SIZE_8BIT, cmd, 2, 100);
+BQ76942::Status BQ76942::ReadDeviceID() const
+{
+    if (_hi2c == nullptr)
+    {
+        return Status::ERR_INVALID_ARG;
+    }
 
-	uint8_t raw[2];
-	HAL_I2C_Mem_Read(_hi2c, 0x10, 0x40, I2C_MEMADD_SIZE_8BIT, raw, 2, 100);
+    std::uint8_t cmd[2]{
+        static_cast<std::uint8_t>(SUBCMD_DEVICE_NUMBER & 0xFFU),
+        static_cast<std::uint8_t>((SUBCMD_DEVICE_NUMBER >> 8U) & 0xFFU)};
 
-	uint16_t id = raw[0] | (raw[1] << 8);   // 0x7694
+    if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_ADDR,
+                          I2C_MEMADD_SIZE_8BIT, cmd, sizeof(cmd),
+                          I2C_TIMEOUT_MS) != HAL_OK)
+    {
+        return Status::ERR_I2C;
+    }
 
+    HAL_Delay(2);
+
+    std::uint8_t raw[2]{};
+    if (HAL_I2C_Mem_Read(_hi2c, _deviceAddress, SUBCMD_BUFFER,
+                         I2C_MEMADD_SIZE_8BIT, raw, sizeof(raw),
+                         I2C_TIMEOUT_MS) != HAL_OK)
+    {
+        return Status::ERR_I2C;
+    }
+
+    const std::uint16_t id =
+        static_cast<std::uint16_t>(raw[0] | (static_cast<std::uint16_t>(raw[1]) << 8U));
+
+    return (id == DEVICE_ID) ? Status::OK : Status::ERR_INVALID_ARG;
 }

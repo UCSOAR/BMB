@@ -57,6 +57,11 @@ constexpr uint8_t TASK_BMB_TASK_PRIORITY = 2;             // Priority of the deb
 constexpr uint8_t TASK_BMB_QUEUE_DEPTH_OBJS = 10;    // Size of the debug task queue
 constexpr uint16_t TASK_BMB_STACK_DEPTH_WORDS = 512; // Size of the debug task stack
 
+// BQ76942 battery monitor task
+constexpr uint8_t TASK_BQ76942_PRIORITY = 2;             // Priority of the BQ76942 task
+constexpr uint8_t TASK_BQ76942_QUEUE_DEPTH_OBJS = 10;    // Size of the BQ76942 task queue
+constexpr uint16_t TASK_BQ76942_STACK_DEPTH_WORDS = 512; // Size of the BQ76942 task stack
+
 
 
 #endif // CUBE_MAIN_SYSTEM_DEFINES_H

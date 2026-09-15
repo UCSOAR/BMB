@@ -13,6 +13,7 @@
 
 #include "stm32g4xx_hal.h"
 #include "UARTTask.hpp"
+#include "BQ76942Task.hpp"
 
 // External Tasks (to send debug commands to)
 
@@ -108,6 +109,35 @@ void DebugTask::HandleDebugMessage(const char *msg)
     SOAR_PRINT("Debug Task Runtime  \t: %d ms\n\n",
                TICKS_TO_MS(xTaskGetTickCount()));
   }
+  //-- BQ76942 BATTERY MONITOR COMMANDS --
+  else if (strcmp(msg, "bq_connect") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_CONNECT));
+  }
+  else if (strcmp(msg, "bq_cells") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_CELL_VOLTAGES));
+  }
+  else if (strcmp(msg, "bq_stack") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_STACK_VOLTAGE));
+  }
+  else if (strcmp(msg, "bq_current") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_CURRENT));
+  }
+  else if (strcmp(msg, "bq_alarm") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_ALARM_STATUS));
+  }
+  else if (strcmp(msg, "bq_safety") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_SAFETY_STATUS));
+  }
+  else if (strcmp(msg, "bq_all") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_ALL_MEASUREMENTS));
+  }
   else
   {
     // Single character command, or unknown command
@@ -120,6 +150,13 @@ void DebugTask::HandleDebugMessage(const char *msg)
       SOAR_PRINT("fs_test  - Run file system tests\n");
       SOAR_PRINT("fs_log   - Log sample sensor data\n");
       SOAR_PRINT("fs_cleanup - Run file system cleanup\n");
+      SOAR_PRINT("bq_connect - BQ76942: probe I2C and verify device ID\n");
+      SOAR_PRINT("bq_cells   - BQ76942: read cell voltages\n");
+      SOAR_PRINT("bq_stack   - BQ76942: read stack voltage\n");
+      SOAR_PRINT("bq_current - BQ76942: read pack current\n");
+      SOAR_PRINT("bq_alarm   - BQ76942: read alarm status\n");
+      SOAR_PRINT("bq_safety  - BQ76942: read safety status A/B/C\n");
+      SOAR_PRINT("bq_all     - BQ76942: read cells, stack and current\n");
       SOAR_PRINT("h        - Show this help\n\n");
       break;
     default:
