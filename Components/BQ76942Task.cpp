@@ -176,6 +176,7 @@ void BQ76942Task::HandleReadCellVoltages()
 	}
 }
 
+
 /**
  * @brief Read and print the stack voltage. Units are userV (10 mV per count by default).
  */

@@ -16,7 +16,7 @@ class BQ76942
 {
 public:
     static constexpr std::uint8_t MAX_CELL_COUNT = 10;
-    static constexpr std::uint8_t DEFAULT_7BIT_ADDRESS = 0x08;
+    static constexpr std::uint8_t DEFAULT_8BIT_ADDRESS = 0x10;
     static constexpr std::uint16_t DEFAULT_CHARGE_VOLTAGE_LIMIT_MV = 20000;
     static constexpr std::uint16_t DEFAULT_CHARGE_CURRENT_LIMIT_MA = 1500;
     static constexpr std::uint8_t  SUBCMD_ADDR   = 0x3E;
@@ -54,14 +54,15 @@ public:
     };
 
     explicit BQ76942(I2C_HandleTypeDef *hi2c,
-                     std::uint8_t address7bit = DEFAULT_7BIT_ADDRESS);
+                     std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
     BQ76942(I2C_HandleTypeDef *hi2c,
             Config config,
-            std::uint8_t address7bit = DEFAULT_7BIT_ADDRESS);
+            std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
 
     Status IsConnected() const;
     Status ReadMeasurements(Measurements &measurements) const;
     Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
+    uint8_t ComputeCRC8(const std::uint8_t* data, size_t length) const;
     Status ReadStackVoltage(std::int16_t &userVolts) const;
     Status ReadCurrent(std::int16_t &userAmps) const;
     Status ReadAlarmStatus(std::uint16_t &alarmStatus) const;
