@@ -24,60 +24,67 @@ public:
     static constexpr std::uint8_t  SUBCMD_DELAY_MS = 2;
     static constexpr std::uint16_t SUBCMD_DEVICE_NUMBER = 0x0001;
     static constexpr std::uint16_t DEVICE_ID = 0x7694;
+    static constexpr std::uint16_t SUBCMD_PCHG_FET = 0x0093;
+    static constexpr std::uint16_t SUBCMD_PDSG_FET = 0x0094;
+    static constexpr std::uint16_t SUBCMD_FET_STATUS = 0x0079;
+    
 
+    
     enum class Status : std::uint8_t
     {
         OK = 0,
         ERR_INVALID_ARG,
         ERR_I2C
     };
-
+    
     struct Config
     {
         std::uint8_t cellCount = MAX_CELL_COUNT;
         std::uint16_t chargeVoltageLimit_mV = DEFAULT_CHARGE_VOLTAGE_LIMIT_MV;
         std::uint16_t chargeCurrentLimit_mA = DEFAULT_CHARGE_CURRENT_LIMIT_MA;
     };
-
+    
     struct Measurements
     {
         std::int16_t cellVoltage_mV[MAX_CELL_COUNT]{};
         std::int16_t stackVoltage_userV = 0;
         std::int16_t current_userA = 0;
     };
-
+    
     struct SafetyStatus
     {
         std::uint8_t a = 0;
         std::uint8_t b = 0;
         std::uint8_t c = 0;
     };
-
+    
     explicit BQ76942(I2C_HandleTypeDef *hi2c,
-                     std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
-    BQ76942(I2C_HandleTypeDef *hi2c,
+        std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
+        BQ76942(I2C_HandleTypeDef *hi2c,
             Config config,
             std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
-
-    Status IsConnected() const;
-    Status ReadMeasurements(Measurements &measurements) const;
-    Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
-    uint8_t ComputeCRC8(const std::uint8_t* data, size_t length) const;
+            
+            Status IsConnected() const;
+            Status ReadMeasurements(Measurements &measurements) const;
+            Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
+            uint8_t ComputeCRC8(const std::uint8_t* data, size_t length) const;
     Status ReadStackVoltage(std::int16_t &userVolts) const;
     Status ReadCurrent(std::int16_t &userAmps) const;
     Status ReadAlarmStatus(std::uint16_t &alarmStatus) const;
     Status ClearAlarmStatus(std::uint16_t alarmMask) const;
     Status ReadSafetyStatus(SafetyStatus &status) const;
     Status ReadDeviceID() const;
+    Status SendSubcommand(std::uint16_t subcmd) const;
+    Status ReadFETStatus(std::uint8_t& fet_status) const;
     bool IsAlertAsserted() const;
     static void NotifyAlertInterrupt();
     static bool ConsumeAlertInterrupt();
-
+    
     const Config &GetConfig() const;
-
-private:
+    
+    private:
     static constexpr std::uint16_t I2C_TIMEOUT_MS = 100;
-
+    
     enum Register : std::uint8_t
     {
         CONTROL_STATUS = 0x00,

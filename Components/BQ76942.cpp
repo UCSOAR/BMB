@@ -23,22 +23,47 @@ BQ76942::BQ76942(I2C_HandleTypeDef *hi2c, Config config, std::uint8_t address7bi
     }
 }
 
-//BQ76942::Status BQ76942::IsConnected() const
-//{
-//    if (_hi2c == nullptr)
-//    {
-//        return Status::ERR_INVALID_ARG;
-//    }
-//
-//    if(HAL_I2C_IsDeviceReady(_hi2c, _deviceAddress, 2, I2C_TIMEOUT_MS) == HAL_OK){
-//    	return (ReadDeviceID() == Status::OK)
-//    			? Status::OK
-//    			: Status::ERR_INVALID_ARG;
-//    }
-//
-//    return Status::ERR_I2C;
-//
-//}
+BQ76942::Status BQ76942::SendSubcommand(std::uint16_t subcmd) const
+{
+	std::uint8_t cmd[4]{};
+
+	std::uint8_t data1 = static_cast<std::uint8_t>(subcmd & 0xFFU);
+	std::uint8_t data2 = static_cast<std::uint8_t>((subcmd >> 8U) & 0xFFU);
+
+	std::uint8_t crc1_buffer[3] = {
+		static_cast<std::uint8_t>(_deviceAddress),
+		SUBCMD_ADDR,
+		data1
+	};
+	std::uint8_t crc2_buffer[1] = { data2 };
+
+	cmd[0] = data1;
+	cmd[1] = ComputeCRC8(crc1_buffer, 3);
+	cmd[2] = data2;
+	cmd[3] = ComputeCRC8(crc2_buffer, 1);
+
+	if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_ADDR,
+						  I2C_MEMADD_SIZE_8BIT, cmd, sizeof(cmd),
+						  I2C_TIMEOUT_MS) != HAL_OK)
+	{
+		return Status::ERR_I2C;
+	}
+	return Status::OK;
+}
+
+BQ76942::Status BQ76942::ReadFETStatus(std::uint8_t& fet_status) const
+{
+    Status write_status = SendSubcommand(SUBCMD_FET_STATUS);
+    if (write_status != Status::OK)
+    {
+        return write_status;
+    }
+
+    // Wait for the BQ76942 to load data into the 0x40 buffer
+    osDelay(2);
+
+    return ReadU8(static_cast<Register>(SUBCMD_BUFFER), fet_status);
+}
 
 BQ76942::Status BQ76942::IsConnected() const
 {
@@ -46,6 +71,7 @@ BQ76942::Status BQ76942::IsConnected() const
 	        return ReadDeviceID();
 	    }
 
+	return Status::ERR_I2C;
 }
 
 BQ76942::Status BQ76942::ReadMeasurements(Measurements &measurements) const

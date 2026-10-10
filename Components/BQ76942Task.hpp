@@ -31,6 +31,9 @@ enum BQ76942_TASK_COMMANDS : uint16_t
 {
     BQ76942_COMMAND_NONE = 0,
     BQ76942_REQUEST_CONNECT,          // Probe the I2C address and verify the device ID
+    BQ76942_REQUEST_TEST_MOSFET_PCHG, // Test the MOSFET on pin 39 by turning them on and off
+    BQ76942_REQUEST_TEST_MOSFET_PDSG, // Test the MOSFET on pin 39 by turning them on and off
+    BQ76942_REQUEST_FET_STATUS,       // Read the FET status register
     BQ76942_REQUEST_CELL_VOLTAGES,    // Read every enabled cell voltage (mV)
     BQ76942_REQUEST_STACK_VOLTAGE,    // Read the stack voltage (userV, 10 mV units by default)
     BQ76942_REQUEST_CURRENT,          // Read the CC2 pack current (userA, mA by default)
@@ -75,6 +78,9 @@ class BQ76942Task: public Task
 
 		// Request handlers
 		void HandleConnect();
+		void HandleTestMosfetpchg();
+		void HandleTestMosfetpdsg();
+		void HandleReadFetStatus();
 		void HandleReadCellVoltages();
 		void HandleReadStackVoltage();
 		void HandleReadCurrent();

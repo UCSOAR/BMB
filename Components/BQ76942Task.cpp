@@ -10,6 +10,9 @@
 #include "Command.hpp"
 #include "Task.hpp"
 #include "BQ76942Task.hpp"
+#include "stm32g4xx_hal.h"
+#include "stm32g4xx_hal_gpio.h"
+
 
 /************************************
  * PRIVATE MACROS AND DEFINES
@@ -99,6 +102,18 @@ void BQ76942Task::HandleRequestCommand(uint16_t taskCommand){
 		HandleConnect();
 		break;
 
+	case BQ76942_REQUEST_TEST_MOSFET_PCHG:
+		HandleTestMosfetpchg();
+		break;
+
+	case BQ76942_REQUEST_TEST_MOSFET_PDSG:
+		HandleTestMosfetpdsg();
+		break;
+
+	case BQ76942_REQUEST_FET_STATUS:
+		HandleReadFetStatus();
+		break;
+
 	case BQ76942_REQUEST_CELL_VOLTAGES:
 		HandleReadCellVoltages();
 		break;
@@ -155,6 +170,60 @@ void BQ76942Task::HandleConnect()
 	}
 
 	SOAR_PRINT("BQ76942 - Connected, device ID OK\n");
+}
+
+void BQ76942Task::HandleTestMosfetpchg()
+{
+	static bool pchg_on = false;
+	BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_PCHG_FET);
+	
+	if (status == BQ76942::Status::OK) {
+		pchg_on = !pchg_on;
+		SOAR_PRINT("BQ76942 - PCHG MOSFET toggled %s\n", pchg_on ? "ON" : "OFF");
+	} else {
+		SOAR_PRINT("BQ76942 - PCHG MOSFET toggle failed (%s)\n", StatusToString(status));
+	}
+}
+
+void BQ76942Task::HandleTestMosfetpdsg()
+{
+	static bool pdsg_on = false;
+	BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_PDSG_FET);
+	
+	if (status == BQ76942::Status::OK) {
+		pdsg_on = !pdsg_on;
+		SOAR_PRINT("BQ76942 - PDSG MOSFET toggled %s\n", pdsg_on ? "ON" : "OFF");
+	} else {
+		SOAR_PRINT("BQ76942 - PDSG MOSFET toggle failed (%s)\n", StatusToString(status));
+	}
+}
+
+/**
+ * @brief Read and print the hardware FET Status register (0x0079)
+ */
+void BQ76942Task::HandleReadFetStatus()
+{
+    std::uint8_t fet_status = 0;
+    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
+
+    if (status == BQ76942::Status::OK)
+    {
+        bool chg  = fet_status & (1 << 0);
+        bool dsg  = fet_status & (1 << 1);
+        bool pchg = fet_status & (1 << 2);
+        bool pdsg = fet_status & (1 << 3);
+
+        SOAR_PRINT("BQ76942 - FET Status: PCHG=%s, PDSG=%s, CHG=%s, DSG=%s (Raw: 0x%02X)\n",
+                   pchg ? "ON" : "OFF",
+                   pdsg ? "ON" : "OFF",
+                   chg  ? "ON" : "OFF",
+                   dsg  ? "ON" : "OFF",
+                   fet_status);
+    }
+    else
+    {
+        SOAR_PRINT("BQ76942 - FET Status read failed (%s)\n", StatusToString(status));
+    }
 }
 
 /**
@@ -271,5 +340,4 @@ const char* BQ76942Task::StatusToString(BQ76942::Status status)
 	default:                               return "UNKNOWN";
 	}
 }
-
 
