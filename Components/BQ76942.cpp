@@ -65,6 +65,28 @@ BQ76942::Status BQ76942::ReadFETStatus(std::uint8_t& fet_status) const
     return ReadU8(static_cast<Register>(SUBCMD_BUFFER), fet_status);
 }
 
+BQ76942::Status BQ76942::SendFETControl(std::uint8_t fet_mask) const
+{
+    std::uint8_t buffer_cmd[2];
+    std::uint8_t crc_buf[3] = {
+        static_cast<std::uint8_t>(_deviceAddress),
+        SUBCMD_BUFFER,
+        fet_mask
+    };
+
+    buffer_cmd[0] = fet_mask;
+    buffer_cmd[1] = ComputeCRC8(crc_buf, 3);
+
+    // Write 8-bit payload to 0x40 buffer
+    if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_BUFFER, I2C_MEMADD_SIZE_8BIT, buffer_cmd, sizeof(buffer_cmd), I2C_TIMEOUT_MS) != HAL_OK)
+    {
+        return Status::ERR_I2C;
+    }
+
+    // Trigger the FET_CONTROL subcommand
+    return SendSubcommand(SUBCMD_FET_CONTROL);
+}
+
 BQ76942::Status BQ76942::IsConnected() const
 {
 	if(HAL_I2C_IsDeviceReady(_hi2c, _deviceAddress, 2, I2C_TIMEOUT_MS) == HAL_OK){

@@ -15,8 +15,8 @@ extern "C"
 class BQ76942
 {
 public:
-    static constexpr std::uint8_t MAX_CELL_COUNT = 10;
-    static constexpr std::uint8_t DEFAULT_8BIT_ADDRESS = 0x10;
+    static constexpr std::uint8_t  MAX_CELL_COUNT = 10;
+    static constexpr std::uint8_t  DEFAULT_8BIT_ADDRESS = 0x10;
     static constexpr std::uint16_t DEFAULT_CHARGE_VOLTAGE_LIMIT_MV = 20000;
     static constexpr std::uint16_t DEFAULT_CHARGE_CURRENT_LIMIT_MA = 1500;
     static constexpr std::uint8_t  SUBCMD_ADDR   = 0x3E;
@@ -24,9 +24,13 @@ public:
     static constexpr std::uint8_t  SUBCMD_DELAY_MS = 2;
     static constexpr std::uint16_t SUBCMD_DEVICE_NUMBER = 0x0001;
     static constexpr std::uint16_t DEVICE_ID = 0x7694;
-    static constexpr std::uint16_t SUBCMD_PCHG_FET = 0x0093;
-    static constexpr std::uint16_t SUBCMD_PDSG_FET = 0x0094;
     static constexpr std::uint16_t SUBCMD_FET_STATUS = 0x0079;
+    static constexpr std::uint16_t SUBCMD_DSG_OFF = 0x0093;
+    static constexpr std::uint16_t SUBCMD_CHG_OFF = 0x0094;
+    static constexpr std::uint16_t SUBCMD_ALL_FETS_OFF = 0x0095;
+    static constexpr std::uint16_t SUBCMD_ALL_FETS_ON = 0x0096;
+    static constexpr std::uint16_t SUBCMD_FET_CONTROL = 0x0097;
+
     
 
     
@@ -76,6 +80,8 @@ public:
     Status ReadDeviceID() const;
     Status SendSubcommand(std::uint16_t subcmd) const;
     Status ReadFETStatus(std::uint8_t& fet_status) const;
+    Status SendFETControl(std::uint8_t fet_mask) const;
+
     bool IsAlertAsserted() const;
     static void NotifyAlertInterrupt();
     static bool ConsumeAlertInterrupt();
@@ -87,14 +93,14 @@ public:
     
     enum Register : std::uint8_t
     {
-        CONTROL_STATUS = 0x00,
-        SAFETY_STATUS_A = 0x03,
-        SAFETY_STATUS_B = 0x05,
-        SAFETY_STATUS_C = 0x07,
-        CELL_1_VOLTAGE = 0x14,
-        STACK_VOLTAGE = 0x34,
-        CC2_CURRENT = 0x3A,
-        ALARM_STATUS = 0x62
+    	CONTROL_STATUS 	= 	0x00,
+        SAFETY_STATUS_A = 	0x03,
+        SAFETY_STATUS_B = 	0x05,
+        SAFETY_STATUS_C = 	0x07,
+        CELL_1_VOLTAGE  = 	0x14,
+        STACK_VOLTAGE   = 	0x34,
+        CC2_CURRENT 	= 	0x3A,
+        ALARM_STATUS 	=	0x62
 
     };
 

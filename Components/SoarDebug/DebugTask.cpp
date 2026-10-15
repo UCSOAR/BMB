@@ -114,13 +114,13 @@ void DebugTask::HandleDebugMessage(const char *msg)
   {
     BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_CONNECT));
   }
-  else if (strcmp(msg, "test_mosfet_pchg" ) == 0)
+  else if (strcmp(msg, "test_mosfet_chg" ) == 0)
   {
-      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_PCHG));
+      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_CHG));
   }
-  else if (strcmp(msg, "test_mosfet_pdsg") == 0)
+  else if (strcmp(msg, "test_mosfet_dsg") == 0)
   {
-      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_PDSG));
+      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_DSG));
   }
   else if (strcmp(msg, "read_fet_status") == 0)
   {
@@ -151,6 +151,10 @@ void DebugTask::HandleDebugMessage(const char *msg)
   {
     BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_ALL_MEASUREMENTS));
   }
+  else if (strcmp(msg, "bq_reset") == 0)
+  {
+	BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_RESET));
+  }
   else
   {
     // Single character command, or unknown command
@@ -170,9 +174,10 @@ void DebugTask::HandleDebugMessage(const char *msg)
       SOAR_PRINT("bq_alarm   - BQ76942: read alarm status\n");
       SOAR_PRINT("bq_safety  - BQ76942: read safety status A/B/C\n");
       SOAR_PRINT("bq_all     - BQ76942: read cells, stack and current\n");
-      SOAR_PRINT("test_mosfet_pchg - BQ76942: test pack charge mosfet\n");
-      SOAR_PRINT("test_mosfet_pdsg - BQ76942: test pack discharge mosfet\n");
+      SOAR_PRINT("test_mosfet_chg - BQ76942: test pack charge mosfet\n");
+      SOAR_PRINT("test_mosfet_dsg - BQ76942: test pack discharge mosfet\n");
       SOAR_PRINT("read_fet_status - BQ76942: read pack mosfet status\n");
+      SOAR_PRINT("bq_reset   - BQ76942: reset the device\n");
       SOAR_PRINT("h        - Show this help\n\n");
       break;
     default:

@@ -31,15 +31,16 @@ enum BQ76942_TASK_COMMANDS : uint16_t
 {
     BQ76942_COMMAND_NONE = 0,
     BQ76942_REQUEST_CONNECT,          // Probe the I2C address and verify the device ID
-    BQ76942_REQUEST_TEST_MOSFET_PCHG, // Test the MOSFET on pin 39 by turning them on and off
-    BQ76942_REQUEST_TEST_MOSFET_PDSG, // Test the MOSFET on pin 39 by turning them on and off
+    BQ76942_REQUEST_TEST_MOSFET_CHG, // Test the MOSFET on pin 39 by turning them on and off
+    BQ76942_REQUEST_TEST_MOSFET_DSG, // Test the MOSFET on pin 39 by turning them on and off
     BQ76942_REQUEST_FET_STATUS,       // Read the FET status register
     BQ76942_REQUEST_CELL_VOLTAGES,    // Read every enabled cell voltage (mV)
     BQ76942_REQUEST_STACK_VOLTAGE,    // Read the stack voltage (userV, 10 mV units by default)
     BQ76942_REQUEST_CURRENT,          // Read the CC2 pack current (userA, mA by default)
     BQ76942_REQUEST_ALARM_STATUS,     // Read the Alarm Status register
     BQ76942_REQUEST_SAFETY_STATUS,    // Read Safety Status A/B/C
-    BQ76942_REQUEST_ALL_MEASUREMENTS  // Cells + stack + current in one shot
+    BQ76942_REQUEST_ALL_MEASUREMENTS, // Cells + stack + current in one shot
+	BQ76942_REQUEST_RESET             // Reset the BQ76942 device
 };
 
 /************************************
@@ -78,8 +79,8 @@ class BQ76942Task: public Task
 
 		// Request handlers
 		void HandleConnect();
-		void HandleTestMosfetpchg();
-		void HandleTestMosfetpdsg();
+		void HandleTestMosfetChg();
+		void HandleTestMosfetDsg();
 		void HandleReadFetStatus();
 		void HandleReadCellVoltages();
 		void HandleReadStackVoltage();
@@ -87,6 +88,7 @@ class BQ76942Task: public Task
 		void HandleReadAlarmStatus();
 		void HandleReadSafetyStatus();
 		void HandleReadAllMeasurements();
+		void HandleReset();
 
 		static const char* StatusToString(BQ76942::Status status);
 
