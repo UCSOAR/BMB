@@ -102,6 +102,10 @@ void BQ76942Task::HandleRequestCommand(uint16_t taskCommand){
 		HandleConnect();
 		break;
 
+	case BQ76942_REQUEST_TOGGLE_FET_EN:
+		HandleToggleFetEnable();
+		break;
+
 	case BQ76942_REQUEST_TEST_MOSFET_CHG:
 		HandleTestMosfetChg();
 		break;
@@ -185,7 +189,6 @@ void BQ76942Task::HandleTestMosfetDsg()
 
     if (status == BQ76942::Status::OK) {
         fet_status ^= (1 << 1);
-        fet_status &= 0x03;
 
         status = bq_->SendFETControl(fet_status);
 
@@ -200,6 +203,21 @@ void BQ76942Task::HandleTestMosfetDsg()
 }
 
 /**
+ * @brief Toggles the FET_EN bit (0x0022) to enable/disable autonomous FET control.
+ *        Must be disabled for manual FET control commands to work.
+ */
+void BQ76942Task::HandleToggleFetEnable()
+{
+    BQ76942::Status status = bq_->ToggleAutonomousFETs();
+
+    if (status == BQ76942::Status::OK) {
+        SOAR_PRINT("BQ76942 - FET_EN toggled successfully (0x0022 sent).\n");
+    } else {
+        SOAR_PRINT("BQ76942 - Failed to toggle FET_EN (%s)\n", StatusToString(status));
+    }
+}
+
+/**
  * @brief Toggle the CHG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
  */
 void BQ76942Task::HandleTestMosfetChg()
@@ -209,7 +227,6 @@ void BQ76942Task::HandleTestMosfetChg()
 
     if (status == BQ76942::Status::OK) {
         fet_status ^= (1 << 0);
-        fet_status &= 0x03;
 
         status = bq_->SendFETControl(fet_status);
 

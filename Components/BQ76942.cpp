@@ -294,6 +294,11 @@ BQ76942::Status BQ76942::WriteU16(Register reg, std::uint16_t value) const
                : Status::ERR_I2C;
 }
 
+BQ76942::Status BQ76942::ToggleAutonomousFETs() const
+{
+    return SendSubcommand(SUBCMD_FET_ENABLE);
+}
+
 BQ76942::Status BQ76942::ReadDeviceID() const
 {
 	// payload 4 bytes: Data1, CRC1, Data2, CRC2

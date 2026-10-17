@@ -31,8 +31,9 @@ enum BQ76942_TASK_COMMANDS : uint16_t
 {
     BQ76942_COMMAND_NONE = 0,
     BQ76942_REQUEST_CONNECT,          // Probe the I2C address and verify the device ID
-    BQ76942_REQUEST_TEST_MOSFET_CHG, // Test the MOSFET on pin 39 by turning them on and off
-    BQ76942_REQUEST_TEST_MOSFET_DSG, // Test the MOSFET on pin 39 by turning them on and off
+	BQ76942_REQUEST_TOGGLE_FET_EN, 	  // Toggle the FET enable subcommand to toggle CHG|DSG MOSFETs
+    BQ76942_REQUEST_TEST_MOSFET_CHG,  // Test the CHG MOSFET
+    BQ76942_REQUEST_TEST_MOSFET_DSG,  // Test the DSG MOSFET
     BQ76942_REQUEST_FET_STATUS,       // Read the FET status register
     BQ76942_REQUEST_CELL_VOLTAGES,    // Read every enabled cell voltage (mV)
     BQ76942_REQUEST_STACK_VOLTAGE,    // Read the stack voltage (userV, 10 mV units by default)
@@ -79,6 +80,7 @@ class BQ76942Task: public Task
 
 		// Request handlers
 		void HandleConnect();
+		void HandleToggleFetEnable();
 		void HandleTestMosfetChg();
 		void HandleTestMosfetDsg();
 		void HandleReadFetStatus();

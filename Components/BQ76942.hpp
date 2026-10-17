@@ -24,6 +24,7 @@ public:
     static constexpr std::uint8_t  SUBCMD_DELAY_MS = 2;
     static constexpr std::uint16_t SUBCMD_DEVICE_NUMBER = 0x0001;
     static constexpr std::uint16_t DEVICE_ID = 0x7694;
+    static constexpr std::uint16_t SUBCMD_FET_ENABLE = 0x0022;
     static constexpr std::uint16_t SUBCMD_FET_STATUS = 0x0079;
     static constexpr std::uint16_t SUBCMD_DSG_OFF = 0x0093;
     static constexpr std::uint16_t SUBCMD_CHG_OFF = 0x0094;
@@ -68,10 +69,11 @@ public:
             Config config,
             std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
             
-            Status IsConnected() const;
-            Status ReadMeasurements(Measurements &measurements) const;
-            Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
-            uint8_t ComputeCRC8(const std::uint8_t* data, size_t length) const;
+	uint8_t ComputeCRC8(const std::uint8_t* data, size_t length) const;
+
+	Status IsConnected() const;
+	Status ReadMeasurements(Measurements &measurements) const;
+	Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
     Status ReadStackVoltage(std::int16_t &userVolts) const;
     Status ReadCurrent(std::int16_t &userAmps) const;
     Status ReadAlarmStatus(std::uint16_t &alarmStatus) const;
@@ -79,6 +81,7 @@ public:
     Status ReadSafetyStatus(SafetyStatus &status) const;
     Status ReadDeviceID() const;
     Status SendSubcommand(std::uint16_t subcmd) const;
+    Status ToggleAutonomousFETs() const;
     Status ReadFETStatus(std::uint8_t& fet_status) const;
     Status SendFETControl(std::uint8_t fet_mask) const;
 

@@ -114,6 +114,10 @@ void DebugTask::HandleDebugMessage(const char *msg)
   {
     BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_CONNECT));
   }
+  else if (strcmp(msg, "bq_fet_en") == 0)
+    {
+        BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TOGGLE_FET_EN));
+    }
   else if (strcmp(msg, "test_mosfet_chg" ) == 0)
   {
       BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_CHG));
