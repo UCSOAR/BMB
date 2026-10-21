@@ -25,6 +25,9 @@ public:
     static constexpr std::uint16_t SUBCMD_DEVICE_NUMBER = 0x0001;
     static constexpr std::uint16_t DEVICE_ID = 0x7694;
     static constexpr std::uint16_t SUBCMD_FET_ENABLE = 0x0022;
+    static constexpr std::uint16_t SUBCMD_CHGTEST = 0x001F;
+	static constexpr std::uint16_t SUBCMD_DSGTEST = 0x0020;
+	// These might be switched from here on
     static constexpr std::uint16_t SUBCMD_FET_STATUS = 0x0079;
     static constexpr std::uint16_t SUBCMD_DSG_OFF = 0x0093;
     static constexpr std::uint16_t SUBCMD_CHG_OFF = 0x0094;

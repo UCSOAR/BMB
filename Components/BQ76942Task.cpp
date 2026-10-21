@@ -180,29 +180,6 @@ void BQ76942Task::HandleConnect()
 }
 
 /**
- * @brief Toggle the DSG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
- */
-void BQ76942Task::HandleTestMosfetDsg()
-{
-    std::uint8_t fet_status = 0;
-    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
-
-    if (status == BQ76942::Status::OK) {
-        fet_status ^= (1 << 1);
-
-        status = bq_->SendFETControl(fet_status);
-
-        if (status == BQ76942::Status::OK) {
-            SOAR_PRINT("BQ76942 - DSG MOSFET toggled %s\n", (fet_status & (1 << 1)) ? "ON" : "OFF");
-        } else {
-            SOAR_PRINT("BQ76942 - DSG MOSFET toggle failed (%s)\n", StatusToString(status));
-        }
-    } else {
-        SOAR_PRINT("BQ76942 - Failed to read FET status (%s)\n", StatusToString(status));
-    }
-}
-
-/**
  * @brief Toggles the FET_EN bit (0x0022) to enable/disable autonomous FET control.
  *        Must be disabled for manual FET control commands to work.
  */
@@ -218,27 +195,108 @@ void BQ76942Task::HandleToggleFetEnable()
 }
 
 /**
- * @brief Toggle the CHG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
+ * @brief Toggle the DSG MOSFET using the explicit DSGTEST (0x0020) test subcommand.
+ *        Requires the device to be in FET Test Mode (FET_EN = 0).
+ */
+void BQ76942Task::HandleTestMosfetDsg()
+{
+    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_DSGTEST);
+
+    if (status == BQ76942::Status::OK) {
+        SOAR_PRINT("BQ76942 - DSGTEST (0x0020) command sent.\n");
+    } else {
+        SOAR_PRINT("BQ76942 - DSGTEST command failed (%s)\n", StatusToString(status));
+    }
+}
+
+/**
+ * @brief Toggle the CHG MOSFET using the explicit CHGTEST (0x001F) test subcommand.
+ *        Requires the device to be in FET Test Mode (FET_EN = 0).
  */
 void BQ76942Task::HandleTestMosfetChg()
 {
-    std::uint8_t fet_status = 0;
-    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
+    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_CHGTEST);
 
     if (status == BQ76942::Status::OK) {
-        fet_status ^= (1 << 0);
-
-        status = bq_->SendFETControl(fet_status);
-
-        if (status == BQ76942::Status::OK) {
-            SOAR_PRINT("BQ76942 - CHG MOSFET toggled %s\n", (fet_status & (1 << 0)) ? "ON" : "OFF");
-        } else {
-            SOAR_PRINT("BQ76942 - CHG MOSFET toggle failed (%s)\n", StatusToString(status));
-        }
+        SOAR_PRINT("BQ76942 - CHGTEST (0x001F) command sent.\n");
     } else {
-        SOAR_PRINT("BQ76942 - Failed to read FET status (%s)\n", StatusToString(status));
+        SOAR_PRINT("BQ76942 - CHGTEST command failed (%s)\n", StatusToString(status));
     }
 }
+
+///**
+// * @brief Toggle the DSG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
+// */
+//void BQ76942Task::HandleTestMosfetDsg()
+//{
+//    std::uint8_t fet_status = 0;
+//    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
+//
+//    if (status == BQ76942::Status::OK) {
+//        fet_status ^= (1 << 1);
+//
+//        status = bq_->SendFETControl(fet_status);
+//
+//        if (status == BQ76942::Status::OK) {
+//            SOAR_PRINT("BQ76942 - DSG MOSFET toggled %s\n", (fet_status & (1 << 1)) ? "ON" : "OFF");
+//        } else {
+//            SOAR_PRINT("BQ76942 - DSG MOSFET toggle failed (%s)\n", StatusToString(status));
+//        }
+//    } else {
+//        SOAR_PRINT("BQ76942 - Failed to read FET status (%s)\n", StatusToString(status));
+//    }
+//}
+//
+//
+///**
+// * @brief Toggle the CHG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
+// */
+//void BQ76942Task::HandleTestMosfetChg()
+//{
+//    std::uint8_t fet_status = 0;
+//    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
+//
+//    if (status == BQ76942::Status::OK) {
+//        fet_status ^= (1 << 0);
+//
+//        status = bq_->SendFETControl(fet_status);
+//
+//        if (status == BQ76942::Status::OK) {
+//            SOAR_PRINT("BQ76942 - CHG MOSFET toggled %s\n", (fet_status & (1 << 0)) ? "ON" : "OFF");
+//        } else {
+//            SOAR_PRINT("BQ76942 - CHG MOSFET toggle failed (%s)\n", StatusToString(status));
+//        }
+//    } else {
+//        SOAR_PRINT("BQ76942 - Failed to read FET status (%s)\n", StatusToString(status));
+//    }
+//}
+
+///IMP 2 -Up manual -DOWN test
+
+//void BQ76942Task::HandleTestMosfetDsg()
+//{
+//    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_DSGTEST);
+//
+//    if (status == BQ76942::Status::OK) {
+//        SOAR_PRINT("BQ76942 - DSGTEST (0x0020) command sent.\n");
+//    } else {
+//        SOAR_PRINT("BQ76942 - DSGTEST command failed (%s)\n", StatusToString(status));
+//    }
+//}
+//
+//
+//
+//void BQ76942Task::HandleTestMosfetChg()
+//{
+//    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_CHGTEST);
+//
+//    if (status == BQ76942::Status::OK) {
+//        SOAR_PRINT("BQ76942 - CHGTEST (0x001F) command sent.\n");
+//    } else {
+//        SOAR_PRINT("BQ76942 - CHGTEST command failed (%s)\n", StatusToString(status));
+//    }
+//}
+
 
 /**
  * @brief Read and print the hardware FET Status register (0x0079)
