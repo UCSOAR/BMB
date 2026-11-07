@@ -15,7 +15,7 @@ extern "C"
 class BQ76942
 {
 public:
-    static constexpr std::uint8_t  MAX_CELL_COUNT = 10;
+    static constexpr std::uint8_t  MAX_CELL_COUNT = 4;
     static constexpr std::uint8_t  DEFAULT_8BIT_ADDRESS = 0x10;
     static constexpr std::uint16_t DEFAULT_CHARGE_VOLTAGE_LIMIT_MV = 20000;
     static constexpr std::uint16_t DEFAULT_CHARGE_CURRENT_LIMIT_MA = 1500;
@@ -35,9 +35,9 @@ public:
     static constexpr std::uint16_t SUBCMD_ALL_FETS_ON = 0x0096;
     static constexpr std::uint16_t SUBCMD_FET_CONTROL = 0x0097;
 
-    
 
-    
+
+
     enum class Status : std::uint8_t
     {
         OK = 0,
