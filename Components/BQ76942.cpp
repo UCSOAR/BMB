@@ -96,6 +96,65 @@ BQ76942::Status BQ76942::IsConnected() const
 	return Status::ERR_I2C;
 }
 
+BQ76942::Status BQ76942::WriteCCGain(float gain) const
+{
+    if (_hi2c == nullptr) { return Status::ERR_INVALID_ARG; }
+
+    const std::uint16_t addr = DATA_MEM_CC_GAIN;
+    const std::uint8_t  addr_lo = static_cast<std::uint8_t>(addr & 0xFFU);
+    const std::uint8_t  addr_hi = static_cast<std::uint8_t>((addr >> 8U) & 0xFFU);
+
+    // Reinterpret float bytes without memcpy
+    const std::uint32_t bits = *reinterpret_cast<const std::uint32_t*>(&gain);
+    const std::uint8_t flt[4] = {
+        static_cast<std::uint8_t>(bits        & 0xFFU),
+        static_cast<std::uint8_t>((bits >> 8U) & 0xFFU),
+        static_cast<std::uint8_t>((bits >>16U) & 0xFFU),
+        static_cast<std::uint8_t>((bits >>24U) & 0xFFU)
+    };
+
+    // Step 1: write DM address to 0x3E
+    {
+        std::uint8_t crc1[3] = { static_cast<std::uint8_t>(_deviceAddress), SUBCMD_ADDR, addr_lo };
+        std::uint8_t crc2[1] = { addr_hi };
+        std::uint8_t cmd[4]  = { addr_lo, ComputeCRC8(crc1, 3U), addr_hi, ComputeCRC8(crc2, 1U) };
+        if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_ADDR,
+                              I2C_MEMADD_SIZE_8BIT, cmd, 4U, I2C_TIMEOUT_MS) != HAL_OK)
+            return Status::ERR_I2C;
+    }
+
+    // Step 2: write 4 float bytes to 0x40 — [d0,crc0, d1,crc1, d2,crc2, d3,crc3]
+    {
+        std::uint8_t crc0[3] = { static_cast<std::uint8_t>(_deviceAddress), SUBCMD_BUFFER, flt[0] };
+        std::uint8_t buf[8]  = {
+            flt[0], ComputeCRC8(crc0, 3U),
+            flt[1], ComputeCRC8(&flt[1], 1U),
+            flt[2], ComputeCRC8(&flt[2], 1U),
+            flt[3], ComputeCRC8(&flt[3], 1U)
+        };
+        if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_BUFFER,
+                              I2C_MEMADD_SIZE_8BIT, buf, 8U, I2C_TIMEOUT_MS) != HAL_OK)
+            return Status::ERR_I2C;
+    }
+
+    // Step 3: commit — simple-sum checksum (NOT CRC8) + length to 0x60/0x61
+    {
+        const std::uint8_t s = static_cast<std::uint8_t>(
+            addr_lo + addr_hi + flt[0] + flt[1] + flt[2] + flt[3]);
+        const std::uint8_t chk = static_cast<std::uint8_t>(~s);
+        const std::uint8_t len = 6U;
+        std::uint8_t crc_chk[3] = { static_cast<std::uint8_t>(_deviceAddress), 0x60U, chk };
+        std::uint8_t crc_len[1] = { len };
+        std::uint8_t cmd[4] = { chk, ComputeCRC8(crc_chk, 3U), len, ComputeCRC8(crc_len, 1U) };
+        if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, 0x60U,
+                              I2C_MEMADD_SIZE_8BIT, cmd, 4U, I2C_TIMEOUT_MS) != HAL_OK)
+            return Status::ERR_I2C;
+    }
+
+    osDelay(5U);
+    return Status::OK;
+}
+
 BQ76942::Status BQ76942::ReadMeasurements(Measurements &measurements) const
 {
     for (std::uint8_t cell = 0; cell < _config.cellCount; ++cell)
@@ -116,6 +175,18 @@ BQ76942::Status BQ76942::ReadMeasurements(Measurements &measurements) const
     return ReadCurrent(measurements.current_userA);
 }
 
+//BQ76942::Status BQ76942::ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const
+//{
+//    if (cellIndex >= _config.cellCount || cellIndex >= MAX_CELL_COUNT)
+//    {
+//        return Status::ERR_INVALID_ARG;
+//    }
+//
+//    const std::uint8_t registerAddress =
+//        static_cast<std::uint8_t>(CELL_1_VOLTAGE + (cellIndex * 2U));
+//    return ReadI16(static_cast<Register>(registerAddress), millivolts);
+//}
+
 BQ76942::Status BQ76942::ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const
 {
     if (cellIndex >= _config.cellCount || cellIndex >= MAX_CELL_COUNT)
@@ -123,9 +194,68 @@ BQ76942::Status BQ76942::ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &m
         return Status::ERR_INVALID_ARG;
     }
 
+    // For a 4S pack wired to VC0..VC3 and VC10 (VC4..VC9 shorted to VC3),
+    // physical Cell 4 is measured on the Cell 10 channel (0x26).
     const std::uint8_t registerAddress =
-        static_cast<std::uint8_t>(CELL_1_VOLTAGE + (cellIndex * 2U));
+        (_config.cellCount == 4U && cellIndex == 3U)
+            ? static_cast<std::uint8_t>(CELL_10_VOLTAGE)
+            : static_cast<std::uint8_t>(CELL_1_VOLTAGE + (cellIndex * 2U));
+
     return ReadI16(static_cast<Register>(registerAddress), millivolts);
+}
+
+BQ76942::Status BQ76942::DisableSleepMode() const
+{
+    return SendSubcommand(SUBCMD_SLEEP_DISABLE);
+}
+
+BQ76942::Status BQ76942::ConfigureVcellMode(std::uint16_t vcellMask) const
+{
+    if (_hi2c == nullptr) { return Status::ERR_INVALID_ARG; }
+
+    if (SendSubcommand(SUBCMD_SET_CFGUPDATE) != Status::OK)
+        return Status::ERR_I2C;
+
+    std::uint16_t batStatus = 0;
+    bool inCfgUpdate = false;
+    for (int attempt = 0; attempt < 10; ++attempt)
+    {
+        osDelay(2U);
+        if (ReadU16(BATTERY_STATUS, batStatus) == Status::OK && (batStatus & 0x0001U))
+        {
+            inCfgUpdate = true;
+            break;
+        }
+    }
+    if (!inCfgUpdate) { return Status::ERR_I2C; }
+
+    const std::uint8_t addr_lo = static_cast<std::uint8_t>(DATA_MEM_VCELL_MODE & 0xFFU);
+    const std::uint8_t addr_hi = static_cast<std::uint8_t>((DATA_MEM_VCELL_MODE >> 8U) & 0xFFU);
+    const std::uint8_t val_lo  = static_cast<std::uint8_t>(vcellMask & 0xFFU);
+    const std::uint8_t val_hi  = static_cast<std::uint8_t>((vcellMask >> 8U) & 0xFFU);
+
+    std::uint8_t crc_a1[3] = { static_cast<std::uint8_t>(_deviceAddress), SUBCMD_ADDR, addr_lo };
+    std::uint8_t cmd_addr[4] = { addr_lo, ComputeCRC8(crc_a1, 3U), addr_hi, ComputeCRC8(&addr_hi, 1U) };
+    if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_ADDR,
+                          I2C_MEMADD_SIZE_8BIT, cmd_addr, 4U, I2C_TIMEOUT_MS) != HAL_OK)
+        return Status::ERR_I2C;
+
+    std::uint8_t crc_d0[3] = { static_cast<std::uint8_t>(_deviceAddress), SUBCMD_BUFFER, val_lo };
+    std::uint8_t buf[4] = { val_lo, ComputeCRC8(crc_d0, 3U), val_hi, ComputeCRC8(&val_hi, 1U) };
+    if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, SUBCMD_BUFFER,
+                          I2C_MEMADD_SIZE_8BIT, buf, 4U, I2C_TIMEOUT_MS) != HAL_OK)
+        return Status::ERR_I2C;
+
+    const std::uint8_t chk = static_cast<std::uint8_t>(~(addr_lo + addr_hi + val_lo + val_hi));
+    const std::uint8_t len = 6U;
+    std::uint8_t crc_chk[3] = { static_cast<std::uint8_t>(_deviceAddress), 0x60U, chk };
+    std::uint8_t cmd_commit[4] = { chk, ComputeCRC8(crc_chk, 3U), len, ComputeCRC8(&len, 1U) };
+    if (HAL_I2C_Mem_Write(_hi2c, _deviceAddress, 0x60U,
+                          I2C_MEMADD_SIZE_8BIT, cmd_commit, 4U, I2C_TIMEOUT_MS) != HAL_OK)
+        return Status::ERR_I2C;
+
+    osDelay(2U);
+    return SendSubcommand(SUBCMD_EXIT_CFGUPDATE);
 }
 
 std::uint8_t BQ76942::ComputeCRC8(const std::uint8_t* data, size_t length) const {

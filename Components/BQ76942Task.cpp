@@ -51,6 +51,7 @@ void BQ76942Task::InitTask()
     {
         bq_ = new BQ76942(&hi2c3);
     }
+
     SOAR_ASSERT(bq_ != nullptr, "BQ76942Task::InitTask() - driver allocation failed");
 
     BaseType_t rtValue =
@@ -61,11 +62,26 @@ void BQ76942Task::InitTask()
             (UBaseType_t)TASK_BQ76942_PRIORITY,
             (TaskHandle_t*)&rtTaskHandle);
 
-                SOAR_ASSERT(rtValue == pdPASS, "BQ76942Task::InitTask() - xTaskCreate() failed");
+    SOAR_ASSERT(rtValue == pdPASS, "BQ76942Task::InitTask() - xTaskCreate() failed");
 }
 
 void BQ76942Task::Run(void * pvParams){
+    if (bq_->ConfigureVcellMode(0x0207U) != BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - ConfigureVcellMode failed\n");
+    }
 
+    if (bq_->DisableSleepMode() != BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - DisableSleepMode failed\n");
+    }
+
+    // 1 mΩ shunt -> CC Gain = 7.4768
+    BQ76942::Status calStatus = bq_->WriteCCGain(7.4768f);
+    if (calStatus != BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - WriteCCGain failed (%d)\n", static_cast<int>(calStatus));
+    }
 
     while (1) {
 
@@ -440,6 +456,15 @@ void BQ76942Task::HandleReset()
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
 
     osDelay(300);
+
+	// Re-apply RAM configuration lost during hardware reset
+	if (bq_->ConfigureVcellMode(0x0207U) != BQ76942::Status::OK)
+		SOAR_PRINT("BQ76942 - ConfigureVcellMode failed after reset\n");
+
+	if (bq_->DisableSleepMode() != BQ76942::Status::OK)
+		SOAR_PRINT("BQ76942 - DisableSleepMode failed after reset\n");
+
+	bq_->WriteCCGain(7.4768f);
 
     SOAR_PRINT("BQ76942 - Reset pulse complete.\n");
 }

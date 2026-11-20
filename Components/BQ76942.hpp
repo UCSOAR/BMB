@@ -34,9 +34,12 @@ public:
     static constexpr std::uint16_t SUBCMD_ALL_FETS_OFF = 0x0095;
     static constexpr std::uint16_t SUBCMD_ALL_FETS_ON = 0x0096;
     static constexpr std::uint16_t SUBCMD_FET_CONTROL = 0x0097;
-
-
-
+    static constexpr std::uint16_t DATA_MEM_CC_GAIN = 0x9180U;
+    static constexpr std::uint16_t SUBCMD_SET_CFGUPDATE  = 0x0090;
+	static constexpr std::uint16_t SUBCMD_EXIT_CFGUPDATE = 0x0092;
+	static constexpr std::uint16_t SUBCMD_SLEEP_ENABLE   = 0x0099;
+	static constexpr std::uint16_t SUBCMD_SLEEP_DISABLE  = 0x009A;
+	static constexpr std::uint16_t DATA_MEM_VCELL_MODE   = 0x9304U;
 
     enum class Status : std::uint8_t
     {
@@ -87,6 +90,9 @@ public:
     Status ToggleAutonomousFETs() const;
     Status ReadFETStatus(std::uint8_t& fet_status) const;
     Status SendFETControl(std::uint8_t fet_mask) const;
+    Status WriteCCGain(float gain) const;
+	Status ConfigureVcellMode(std::uint16_t vcellMask = 0x0207U) const;
+	Status DisableSleepMode() const;
 
     bool IsAlertAsserted() const;
     static void NotifyAlertInterrupt();
@@ -98,17 +104,20 @@ public:
     static constexpr std::uint16_t I2C_TIMEOUT_MS = 100;
     
     enum Register : std::uint8_t
-    {
-    	CONTROL_STATUS 	= 	0x00,
-        SAFETY_STATUS_A = 	0x03,
-        SAFETY_STATUS_B = 	0x05,
-        SAFETY_STATUS_C = 	0x07,
-        CELL_1_VOLTAGE  = 	0x14,
-        STACK_VOLTAGE   = 	0x34,
-        CC2_CURRENT 	= 	0x3A,
-        ALARM_STATUS 	=	0x62
+        {
+            CONTROL_STATUS  = 0x00,
+            SAFETY_STATUS_A = 0x03,
+            SAFETY_STATUS_B = 0x05,
+            SAFETY_STATUS_C = 0x07,
+            BATTERY_STATUS  = 0x12,
+            CELL_1_VOLTAGE  = 0x14,
+            CELL_10_VOLTAGE = 0x26,
+            STACK_VOLTAGE   = 0x34,
+            CC2_CURRENT     = 0x3A,
+            ALARM_STATUS    = 0x62
+        };
 
-    };
+
 
     Status ReadU8(Register reg, std::uint8_t &value) const;
     Status ReadU16(Register reg, std::uint16_t &value) const;
