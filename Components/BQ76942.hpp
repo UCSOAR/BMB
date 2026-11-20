@@ -26,20 +26,19 @@ public:
     static constexpr std::uint16_t DEVICE_ID = 0x7694;
     static constexpr std::uint16_t SUBCMD_FET_ENABLE = 0x0022;
     static constexpr std::uint16_t SUBCMD_CHGTEST = 0x001F;
-	static constexpr std::uint16_t SUBCMD_DSGTEST = 0x0020;
-	// These might be switched from here on
-    static constexpr std::uint16_t SUBCMD_FET_STATUS = 0x0079;
+    static constexpr std::uint16_t SUBCMD_DSGTEST = 0x0020;
+    static constexpr std::uint16_t SUBCMD_MANUFACTURING_STATUS = 0x0057;
+    static constexpr std::uint16_t SUBCMD_RESET_PASSQ = 0x0082;
+    static constexpr std::uint16_t SUBCMD_SET_CFGUPDATE  = 0x0090;
+    static constexpr std::uint16_t SUBCMD_EXIT_CFGUPDATE = 0x0092;
     static constexpr std::uint16_t SUBCMD_DSG_OFF = 0x0093;
     static constexpr std::uint16_t SUBCMD_CHG_OFF = 0x0094;
     static constexpr std::uint16_t SUBCMD_ALL_FETS_OFF = 0x0095;
     static constexpr std::uint16_t SUBCMD_ALL_FETS_ON = 0x0096;
     static constexpr std::uint16_t SUBCMD_FET_CONTROL = 0x0097;
-    static constexpr std::uint16_t DATA_MEM_CC_GAIN = 0x9180U;
-    static constexpr std::uint16_t SUBCMD_SET_CFGUPDATE  = 0x0090;
-	static constexpr std::uint16_t SUBCMD_EXIT_CFGUPDATE = 0x0092;
-	static constexpr std::uint16_t SUBCMD_SLEEP_ENABLE   = 0x0099;
-	static constexpr std::uint16_t SUBCMD_SLEEP_DISABLE  = 0x009A;
-	static constexpr std::uint16_t DATA_MEM_VCELL_MODE   = 0x9304U;
+    static constexpr std::uint16_t SUBCMD_SLEEP_ENABLE   = 0x0099;
+    static constexpr std::uint16_t SUBCMD_SLEEP_DISABLE  = 0x009A;
+    static constexpr std::uint16_t DATA_MEM_VCELL_MODE   = 0x9304U;
 
     enum class Status : std::uint8_t
     {
@@ -70,10 +69,10 @@ public:
     };
     
     explicit BQ76942(I2C_HandleTypeDef *hi2c,
-        std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
-        BQ76942(I2C_HandleTypeDef *hi2c,
-            Config config,
-            std::uint8_t address7bit = DEFAULT_8BIT_ADDRESS);
+        std::uint8_t address8bit = DEFAULT_8BIT_ADDRESS);
+    BQ76942(I2C_HandleTypeDef *hi2c,
+        Config config,
+        std::uint8_t address8bit = DEFAULT_8BIT_ADDRESS);
             
 	uint8_t ComputeCRC8(const std::uint8_t* data, size_t length) const;
 
@@ -82,6 +81,8 @@ public:
 	Status ReadCellVoltage(std::uint8_t cellIndex, std::int16_t &millivolts) const;
     Status ReadStackVoltage(std::int16_t &userVolts) const;
     Status ReadCurrent(std::int16_t &userAmps) const;
+    Status ReadBatteryStatus(std::uint16_t &batStatus) const;
+    Status ReadManufacturingStatus(std::uint16_t &mfgStatus) const;
     Status ReadAlarmStatus(std::uint16_t &alarmStatus) const;
     Status ClearAlarmStatus(std::uint16_t alarmMask) const;
     Status ReadSafetyStatus(SafetyStatus &status) const;
@@ -90,9 +91,8 @@ public:
     Status ToggleAutonomousFETs() const;
     Status ReadFETStatus(std::uint8_t& fet_status) const;
     Status SendFETControl(std::uint8_t fet_mask) const;
-    Status WriteCCGain(float gain) const;
-	Status ConfigureVcellMode(std::uint16_t vcellMask = 0x0207U) const;
-	Status DisableSleepMode() const;
+    Status ConfigureVcellMode(std::uint16_t vcellMask = 0x0207U) const;
+    Status DisableSleepMode() const;
 
     bool IsAlertAsserted() const;
     static void NotifyAlertInterrupt();
@@ -102,21 +102,22 @@ public:
     
     private:
     static constexpr std::uint16_t I2C_TIMEOUT_MS = 100;
+
     
     enum Register : std::uint8_t
-        {
-            CONTROL_STATUS  = 0x00,
-            SAFETY_STATUS_A = 0x03,
-            SAFETY_STATUS_B = 0x05,
-            SAFETY_STATUS_C = 0x07,
-            BATTERY_STATUS  = 0x12,
-            CELL_1_VOLTAGE  = 0x14,
-            CELL_10_VOLTAGE = 0x26,
-            STACK_VOLTAGE   = 0x34,
-            CC2_CURRENT     = 0x3A,
-            ALARM_STATUS    = 0x62
-        };
-
+    {
+        CONTROL_STATUS  = 0x00,
+        SAFETY_STATUS_A = 0x03,
+        SAFETY_STATUS_B = 0x05,
+        SAFETY_STATUS_C = 0x07,
+        BATTERY_STATUS  = 0x12,
+        CELL_1_VOLTAGE  = 0x14,
+        CELL_10_VOLTAGE = 0x26,
+        STACK_VOLTAGE   = 0x34,
+        CC2_CURRENT     = 0x3A,
+        ALARM_STATUS    = 0x62,
+        FET_STATUS      = 0x7F
+    };
 
 
     Status ReadU8(Register reg, std::uint8_t &value) const;

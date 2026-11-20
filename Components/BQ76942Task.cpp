@@ -76,13 +76,6 @@ void BQ76942Task::Run(void * pvParams){
         SOAR_PRINT("BQ76942 - DisableSleepMode failed\n");
     }
 
-    // 1 mΩ shunt -> CC Gain = 7.4768
-    BQ76942::Status calStatus = bq_->WriteCCGain(7.4768f);
-    if (calStatus != BQ76942::Status::OK)
-    {
-        SOAR_PRINT("BQ76942 - WriteCCGain failed (%d)\n", static_cast<int>(calStatus));
-    }
-
     while (1) {
 
         Command cm;
@@ -161,6 +154,18 @@ void BQ76942Task::HandleRequestCommand(uint16_t taskCommand){
 		HandleReset();
 		break;
 
+	case BQ76942_REQUEST_SLEEP_DISABLE:
+		HandleSleepDisable();
+		break;
+
+	case BQ76942_REQUEST_ALL_FETS_OFF:
+		HandleAllFetsOff();
+		break;
+
+	case BQ76942_REQUEST_ALL_FETS_ON:
+		HandleAllFetsOn();
+		break;
+
 	default:
 		SOAR_PRINT("BQ76942Task - Received Unsupported Request Command {%d}\n", taskCommand);
 		break;
@@ -196,15 +201,26 @@ void BQ76942Task::HandleConnect()
 }
 
 /**
- * @brief Toggles the FET_EN bit (0x0022) to enable/disable autonomous FET control.
- *        Must be disabled for manual FET control commands to work.
+ * @brief Toggles Manufacturing Status[FET_EN] (0x0022).
+ *        FET_EN = 0 (default on boot): FET Test Mode (CHGTEST/DSGTEST active).
+ *        FET_EN = 1: Autonomous/normal FET control (CHGTEST/DSGTEST ignored).
  */
 void BQ76942Task::HandleToggleFetEnable()
 {
     BQ76942::Status status = bq_->ToggleAutonomousFETs();
 
     if (status == BQ76942::Status::OK) {
-        SOAR_PRINT("BQ76942 - FET_EN toggled successfully (0x0022 sent).\n");
+        osDelay(2);
+        std::uint16_t mfgStatus = 0;
+        if (bq_->ReadManufacturingStatus(mfgStatus) == BQ76942::Status::OK) {
+            const bool fetEn = (mfgStatus & (1U << 4)) != 0U;
+            SOAR_PRINT("BQ76942 - FET_EN toggled -> %d (%s) (MfgStatus: 0x%04X)\n",
+                       fetEn ? 1 : 0,
+                       fetEn ? "AUTONOMOUS" : "FET_TEST_MODE",
+                       mfgStatus);
+        } else {
+            SOAR_PRINT("BQ76942 - FET_EN toggled (0x0022 sent).\n");
+        }
     } else {
         SOAR_PRINT("BQ76942 - Failed to toggle FET_EN (%s)\n", StatusToString(status));
     }
@@ -219,7 +235,21 @@ void BQ76942Task::HandleTestMosfetDsg()
     BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_DSGTEST);
 
     if (status == BQ76942::Status::OK) {
-        SOAR_PRINT("BQ76942 - DSGTEST (0x0020) command sent.\n");
+        osDelay(2);
+        std::uint16_t mfgStatus = 0;
+        if (bq_->ReadManufacturingStatus(mfgStatus) == BQ76942::Status::OK && (mfgStatus & (1U << 4))) {
+            SOAR_PRINT("BQ76942 - Warning: FET_EN=1 (AUTONOMOUS), DSGTEST ignored. Run bq_fet_en first.\n");
+            return;
+        }
+        std::uint8_t fetStatus = 0;
+        if (bq_->ReadFETStatus(fetStatus) == BQ76942::Status::OK) {
+            SOAR_PRINT("BQ76942 - DSGTEST (0x0020) sent -> DSG=%s (FET_STATUS: 0x%02X, DSG_TEST=%d)\n",
+                       (fetStatus & (1U << 2)) ? "ON" : "OFF",
+                       fetStatus,
+                       (mfgStatus & (1U << 2)) ? 1 : 0);
+        } else {
+            SOAR_PRINT("BQ76942 - DSGTEST (0x0020) command sent.\n");
+        }
     } else {
         SOAR_PRINT("BQ76942 - DSGTEST command failed (%s)\n", StatusToString(status));
     }
@@ -234,88 +264,29 @@ void BQ76942Task::HandleTestMosfetChg()
     BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_CHGTEST);
 
     if (status == BQ76942::Status::OK) {
-        SOAR_PRINT("BQ76942 - CHGTEST (0x001F) command sent.\n");
+        osDelay(2);
+        std::uint16_t mfgStatus = 0;
+        if (bq_->ReadManufacturingStatus(mfgStatus) == BQ76942::Status::OK && (mfgStatus & (1U << 4))) {
+            SOAR_PRINT("BQ76942 - Warning: FET_EN=1 (AUTONOMOUS), CHGTEST ignored. Run bq_fet_en first.\n");
+            return;
+        }
+        std::uint8_t fetStatus = 0;
+        if (bq_->ReadFETStatus(fetStatus) == BQ76942::Status::OK) {
+            SOAR_PRINT("BQ76942 - CHGTEST (0x001F) sent -> CHG=%s (FET_STATUS: 0x%02X, CHG_TEST=%d)\n",
+                       (fetStatus & (1U << 0)) ? "ON" : "OFF",
+                       fetStatus,
+                       (mfgStatus & (1U << 1)) ? 1 : 0);
+        } else {
+            SOAR_PRINT("BQ76942 - CHGTEST (0x001F) command sent.\n");
+        }
     } else {
         SOAR_PRINT("BQ76942 - CHGTEST command failed (%s)\n", StatusToString(status));
     }
 }
 
-///**
-// * @brief Toggle the DSG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
-// */
-//void BQ76942Task::HandleTestMosfetDsg()
-//{
-//    std::uint8_t fet_status = 0;
-//    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
-//
-//    if (status == BQ76942::Status::OK) {
-//        fet_status ^= (1 << 1);
-//
-//        status = bq_->SendFETControl(fet_status);
-//
-//        if (status == BQ76942::Status::OK) {
-//            SOAR_PRINT("BQ76942 - DSG MOSFET toggled %s\n", (fet_status & (1 << 1)) ? "ON" : "OFF");
-//        } else {
-//            SOAR_PRINT("BQ76942 - DSG MOSFET toggle failed (%s)\n", StatusToString(status));
-//        }
-//    } else {
-//        SOAR_PRINT("BQ76942 - Failed to read FET status (%s)\n", StatusToString(status));
-//    }
-//}
-//
-//
-///**
-// * @brief Toggle the CHG MOSFET on pin 39 by reading the FET status, toggling the CHG bit, and sending the new FET control command.
-// */
-//void BQ76942Task::HandleTestMosfetChg()
-//{
-//    std::uint8_t fet_status = 0;
-//    BQ76942::Status status = bq_->ReadFETStatus(fet_status);
-//
-//    if (status == BQ76942::Status::OK) {
-//        fet_status ^= (1 << 0);
-//
-//        status = bq_->SendFETControl(fet_status);
-//
-//        if (status == BQ76942::Status::OK) {
-//            SOAR_PRINT("BQ76942 - CHG MOSFET toggled %s\n", (fet_status & (1 << 0)) ? "ON" : "OFF");
-//        } else {
-//            SOAR_PRINT("BQ76942 - CHG MOSFET toggle failed (%s)\n", StatusToString(status));
-//        }
-//    } else {
-//        SOAR_PRINT("BQ76942 - Failed to read FET status (%s)\n", StatusToString(status));
-//    }
-//}
-
-///IMP 2 -Up manual -DOWN test
-
-//void BQ76942Task::HandleTestMosfetDsg()
-//{
-//    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_DSGTEST);
-//
-//    if (status == BQ76942::Status::OK) {
-//        SOAR_PRINT("BQ76942 - DSGTEST (0x0020) command sent.\n");
-//    } else {
-//        SOAR_PRINT("BQ76942 - DSGTEST command failed (%s)\n", StatusToString(status));
-//    }
-//}
-//
-//
-//
-//void BQ76942Task::HandleTestMosfetChg()
-//{
-//    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_CHGTEST);
-//
-//    if (status == BQ76942::Status::OK) {
-//        SOAR_PRINT("BQ76942 - CHGTEST (0x001F) command sent.\n");
-//    } else {
-//        SOAR_PRINT("BQ76942 - CHGTEST command failed (%s)\n", StatusToString(status));
-//    }
-//}
-
-
 /**
- * @brief Read and print the hardware FET Status register (0x0079)
+ * @brief Read and print the hardware FET Status register (0x7F), along with
+ *        Manufacturing Status (0x0057) and Battery Status (0x12) for MOSFET diagnostics.
  */
 void BQ76942Task::HandleReadFetStatus()
 {
@@ -325,8 +296,8 @@ void BQ76942Task::HandleReadFetStatus()
     if (status == BQ76942::Status::OK)
     {
         bool chg  = fet_status & (1 << 0);
-        bool dsg  = fet_status & (1 << 1);
-        bool pchg = fet_status & (1 << 2);
+        bool pchg = fet_status & (1 << 1);
+        bool dsg  = fet_status & (1 << 2);
         bool pdsg = fet_status & (1 << 3);
 
         SOAR_PRINT("BQ76942 - FET Status: PCHG=%s, PDSG=%s, CHG=%s, DSG=%s (Raw: 0x%02X)\n",
@@ -335,6 +306,27 @@ void BQ76942Task::HandleReadFetStatus()
                    chg  ? "ON" : "OFF",
                    dsg  ? "ON" : "OFF",
                    fet_status);
+
+        std::uint16_t mfgStatus = 0;
+        if (bq_->ReadManufacturingStatus(mfgStatus) == BQ76942::Status::OK)
+        {
+            SOAR_PRINT("BQ76942 - MfgStatus: 0x%04X (FET_EN=%d, DSG_TEST=%d, CHG_TEST=%d)\n",
+                       mfgStatus,
+                       (mfgStatus & (1U << 4)) ? 1 : 0,
+                       (mfgStatus & (1U << 2)) ? 1 : 0,
+                       (mfgStatus & (1U << 1)) ? 1 : 0);
+        }
+
+        std::uint16_t batStatus = 0;
+        if (bq_->ReadBatteryStatus(batStatus) == BQ76942::Status::OK)
+        {
+            SOAR_PRINT("BQ76942 - BatStatus: 0x%04X (SLEEP=%d, SLEEP_EN=%d, SS=%d, PF=%d)\n",
+                       batStatus,
+                       (batStatus & (1U << 15)) ? 1 : 0,
+                       (batStatus & (1U << 2))  ? 1 : 0,
+                       (batStatus & (1U << 11)) ? 1 : 0,
+                       (batStatus & (1U << 12)) ? 1 : 0);
+        }
     }
     else
     {
@@ -464,9 +456,70 @@ void BQ76942Task::HandleReset()
 	if (bq_->DisableSleepMode() != BQ76942::Status::OK)
 		SOAR_PRINT("BQ76942 - DisableSleepMode failed after reset\n");
 
-	bq_->WriteCCGain(7.4768f);
+	// TRM 4.3: Send RESET_PASSQ (0x0082) after RST_SHUT reset to re-initialize charge accumulation
+	if (bq_->SendSubcommand(BQ76942::SUBCMD_RESET_PASSQ) != BQ76942::Status::OK)
+		SOAR_PRINT("BQ76942 - RESET_PASSQ failed after reset\n");
 
     SOAR_PRINT("BQ76942 - Reset pulse complete.\n");
+}
+
+/**
+ * @brief Send SLEEP_DISABLE (0x009A) and report BatteryStatus SLEEP/SLEEP_EN bits.
+ */
+void BQ76942Task::HandleSleepDisable()
+{
+    BQ76942::Status status = bq_->DisableSleepMode();
+    if (status != BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - SLEEP_DISABLE failed (%s)\n", StatusToString(status));
+        return;
+    }
+
+    osDelay(2);
+    std::uint16_t batStatus = 0;
+    if (bq_->ReadBatteryStatus(batStatus) == BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - SLEEP_DISABLE sent -> SLEEP=%d, SLEEP_EN=%d (BatStatus: 0x%04X)\n",
+                   (batStatus & (1U << 15)) ? 1 : 0,
+                   (batStatus & (1U << 2))  ? 1 : 0,
+                   batStatus);
+    }
+    else
+    {
+        SOAR_PRINT("BQ76942 - SLEEP_DISABLE (0x009A) sent.\n");
+    }
+}
+
+/**
+ * @brief Force all FETs off via ALL_FETS_OFF (0x0095) (autonomous mode, FET_EN = 1).
+ */
+void BQ76942Task::HandleAllFetsOff()
+{
+    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_ALL_FETS_OFF);
+    if (status == BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - ALL_FETS_OFF (0x0095) sent.\n");
+    }
+    else
+    {
+        SOAR_PRINT("BQ76942 - ALL_FETS_OFF failed (%s)\n", StatusToString(status));
+    }
+}
+
+/**
+ * @brief Allow all FETs on via ALL_FETS_ON (0x0096) (autonomous mode, FET_EN = 1).
+ */
+void BQ76942Task::HandleAllFetsOn()
+{
+    BQ76942::Status status = bq_->SendSubcommand(BQ76942::SUBCMD_ALL_FETS_ON);
+    if (status == BQ76942::Status::OK)
+    {
+        SOAR_PRINT("BQ76942 - ALL_FETS_ON (0x0096) sent.\n");
+    }
+    else
+    {
+        SOAR_PRINT("BQ76942 - ALL_FETS_ON failed (%s)\n", StatusToString(status));
+    }
 }
 
 /**

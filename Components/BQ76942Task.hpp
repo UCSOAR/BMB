@@ -31,7 +31,7 @@ enum BQ76942_TASK_COMMANDS : uint16_t
 {
     BQ76942_COMMAND_NONE = 0,
     BQ76942_REQUEST_CONNECT,          // Probe the I2C address and verify the device ID
-	BQ76942_REQUEST_TOGGLE_FET_EN, 	  // Toggle the FET enable subcommand to toggle CHG|DSG MOSFETs
+	BQ76942_REQUEST_TOGGLE_FET_EN,    // Toggle FET_EN (0 = FET Test Mode, 1 = Autonomous FET Control)
     BQ76942_REQUEST_TEST_MOSFET_CHG,  // Test the CHG MOSFET
     BQ76942_REQUEST_TEST_MOSFET_DSG,  // Test the DSG MOSFET
     BQ76942_REQUEST_FET_STATUS,       // Read the FET status register
@@ -41,7 +41,10 @@ enum BQ76942_TASK_COMMANDS : uint16_t
     BQ76942_REQUEST_ALARM_STATUS,     // Read the Alarm Status register
     BQ76942_REQUEST_SAFETY_STATUS,    // Read Safety Status A/B/C
     BQ76942_REQUEST_ALL_MEASUREMENTS, // Cells + stack + current in one shot
-	BQ76942_REQUEST_RESET             // Reset the BQ76942 device
+	BQ76942_REQUEST_RESET,            // Reset the BQ76942 device
+	BQ76942_REQUEST_SLEEP_DISABLE,    // Send SLEEP_DISABLE (0x009A) and verify BatteryStatus
+	BQ76942_REQUEST_ALL_FETS_OFF,     // Send ALL_FETS_OFF (0x0095) (autonomous mode)
+	BQ76942_REQUEST_ALL_FETS_ON       // Send ALL_FETS_ON (0x0096) (autonomous mode)
 };
 
 /************************************
@@ -91,6 +94,9 @@ class BQ76942Task: public Task
 		void HandleReadSafetyStatus();
 		void HandleReadAllMeasurements();
 		void HandleReset();
+		void HandleSleepDisable();
+		void HandleAllFetsOff();
+		void HandleAllFetsOn();
 
 		static const char* StatusToString(BQ76942::Status status);
 

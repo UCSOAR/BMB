@@ -115,20 +115,20 @@ void DebugTask::HandleDebugMessage(const char *msg)
     BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_CONNECT));
   }
   else if (strcmp(msg, "bq_fet_en") == 0)
-    {
-        BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TOGGLE_FET_EN));
-    }
-  else if (strcmp(msg, "test_mosfet_chg" ) == 0)
   {
-      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_CHG));
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TOGGLE_FET_EN));
   }
-  else if (strcmp(msg, "test_mosfet_dsg") == 0)
+  else if (strcmp(msg, "bq_test_chg") == 0)
   {
-      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_DSG));
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_CHG));
   }
-  else if (strcmp(msg, "read_fet_status") == 0)
+  else if (strcmp(msg, "bq_test_dsg") == 0)
   {
-      BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_FET_STATUS));
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_TEST_MOSFET_DSG));
+  }
+  else if (strcmp(msg, "bq_fet_stat") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_FET_STATUS));
   }
 
   else if (strcmp(msg, "bq_cells") == 0)
@@ -157,7 +157,19 @@ void DebugTask::HandleDebugMessage(const char *msg)
   }
   else if (strcmp(msg, "bq_reset") == 0)
   {
-	BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_RESET));
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_RESET));
+  }
+  else if (strcmp(msg, "bq_sleep_dis") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_SLEEP_DISABLE));
+  }
+  else if (strcmp(msg, "bq_fets_off") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_ALL_FETS_OFF));
+  }
+  else if (strcmp(msg, "bq_fets_on") == 0)
+  {
+    BQ76942Task::Inst().SendCommand(Command(DATA_COMMAND, BQ76942_REQUEST_ALL_FETS_ON));
   }
   else
   {
@@ -171,17 +183,21 @@ void DebugTask::HandleDebugMessage(const char *msg)
       SOAR_PRINT("fs_test  - Run file system tests\n");
       SOAR_PRINT("fs_log   - Log sample sensor data\n");
       SOAR_PRINT("fs_cleanup - Run file system cleanup\n");
-      SOAR_PRINT("bq_connect - BQ76942: probe I2C and verify device ID\n");
-      SOAR_PRINT("bq_cells   - BQ76942: read cell voltages\n");
-      SOAR_PRINT("bq_stack   - BQ76942: read stack voltage\n");
-      SOAR_PRINT("bq_current - BQ76942: read pack current\n");
-      SOAR_PRINT("bq_alarm   - BQ76942: read alarm status\n");
-      SOAR_PRINT("bq_safety  - BQ76942: read safety status A/B/C\n");
-      SOAR_PRINT("bq_all     - BQ76942: read cells, stack and current\n");
-      SOAR_PRINT("test_mosfet_chg - BQ76942: test pack charge mosfet\n");
-      SOAR_PRINT("test_mosfet_dsg - BQ76942: test pack discharge mosfet\n");
-      SOAR_PRINT("read_fet_status - BQ76942: read pack mosfet status\n");
-      SOAR_PRINT("bq_reset   - BQ76942: reset the device\n");
+      SOAR_PRINT("bq_connect   - BQ76942: probe I2C and verify device ID\n");
+      SOAR_PRINT("bq_cells     - BQ76942: read cell voltages\n");
+      SOAR_PRINT("bq_stack     - BQ76942: read stack voltage\n");
+      SOAR_PRINT("bq_current   - BQ76942: read pack current\n");
+      SOAR_PRINT("bq_alarm     - BQ76942: read alarm status\n");
+      SOAR_PRINT("bq_safety    - BQ76942: read safety status A/B/C\n");
+      SOAR_PRINT("bq_all       - BQ76942: read cells, stack and current\n");
+      SOAR_PRINT("bq_fet_en    - BQ76942: toggle FET_EN (0=Test Mode, 1=Autonomous)\n");
+      SOAR_PRINT("bq_test_chg  - BQ76942: toggle CHG FET (requires FET_EN=0)\n");
+      SOAR_PRINT("bq_test_dsg  - BQ76942: toggle DSG FET (requires FET_EN=0)\n");
+      SOAR_PRINT("bq_fets_off  - BQ76942: force all FETs off (autonomous mode)\n");
+      SOAR_PRINT("bq_fets_on   - BQ76942: allow all FETs on (autonomous mode)\n");
+      SOAR_PRINT("bq_fet_stat  - BQ76942: read FET, Mfg (FET_EN), and Bat (SLEEP/SS/PF) status\n");
+      SOAR_PRINT("bq_sleep_dis - BQ76942: disable SLEEP mode (0x009A)\n");
+      SOAR_PRINT("bq_reset     - BQ76942: reset device and re-apply config\n");
       SOAR_PRINT("h        - Show this help\n\n");
       break;
     default:
